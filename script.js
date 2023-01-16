@@ -1,4 +1,3 @@
-
 /*********************** Agenda *****************/
 /**
 * @author Elie Andriatsitohaina <elie@geomadagascar.com>
@@ -60,7 +59,7 @@ const renderCalendar = () => {
 
 		//console.log(dateSimple + " "+hasEvent);
 
-        liTag += "<li class='" +isToday+" current-day-"+i +"' ondblclick=\"addDateEvent("+i+")\" onmouseover=\"mouseOverEvent("+i+")\">"+i+"</li>";
+        liTag += "<li class='" +isToday+" current-day-"+i +"' onclick=\"mouseOverEvent("+i+")\">"+i+"</li>";
     }
 
     for (let i = lastDayofMonth; i < 6; i++) { 
@@ -92,22 +91,41 @@ prevNextIcon.forEach(icon => {
     });
 });
 
-const addDateEvent =(date)=>{
-	let date_clicked = date +" "+document.querySelector("#current-date").textContent;
-	let monthName = date_clicked.replace(/[0-9]/g,"");
-	let indexOfMonth = months.indexOf(monthName.trim())+1;
-	let annee = document.querySelector("#current-date").textContent.replace(/[^0-9]/g,"")
 
-	let dateLabel =date < 10 ? "0"+date : date;
-	let moisLabel =indexOfMonth < 10 ? "0"+indexOfMonth : indexOfMonth;
-	
-	let dateSimple = annee+"-"+moisLabel+"-"+dateLabel;
+function formEventShow(elem){
 
-	let dateFormatStart = annee+"-"+moisLabel+"-"+dateLabel +" 00:00:00";
-	let dateFormatEnd = annee+"-"+moisLabel+"-"+dateLabel +" 23:59:59";
+	let div = document.querySelector("#form_event")
+	if(div.style.display=="block"){
+		elem.innerHTML ="<i class='bi bi-plus'></i> Créer "
+		div.style.display="none"
+	}else{
+		div.style.display="block"
+		elem.innerHTML ="<i class='bi bi-backspace'></i> Fermer "
+		let map = L.map("map").setView([48.864716, 2.349014], 13);
 
-    document.querySelector(".tooltipss").style.display ="block";
-	document.querySelector("#agenda-fetched").innerHTML = `<div class="row g-2 mt-2">
+		L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 20,
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+		}).addTo(map);
+		
+		let marker = L.marker([48.864716, 2.349014]).addTo(map);
+
+		map.on('click', function(e){
+			marker.setLatLng(e.latlng)
+			document.querySelector("#agenda-lat").value = e.latlng.lat
+			document.querySelector("#agenda-lng").value = e.latlng.lng
+		});
+	}
+}
+
+const createNewEventForm = (debut, fin) => {
+
+	document.querySelector("#agenda-fetched").innerHTML = `
+		<div class="mt-2 mb-2">
+			<button class="btn btn-light" onclick="formEventShow(this)"> <i class="bi bi-plus"></i> Créer </button>
+		</div>
+		<div id="form_event" style="display:none;">
+		<div class="row g-2 mt-2">
 			<div class="col-md">
 				<div class="form-floating">
 					<select class="form-select" id="agenda-type">
@@ -131,13 +149,13 @@ const addDateEvent =(date)=>{
 		<div class="row g-2 mt-2">
 			<div class="col-6">
 				<div class="form-floating">
-					<input type="datetime-local" class="form-control" id="agenda-from"value="${dateFormatStart}">
+					<input type="datetime-local" class="form-control" id="agenda-from"value="${debut}">
 					<label for="floatingInputGrid">De</label>
 				</div>
 			</div>
 			<div class="col-6">
 				<div class="form-floating">
-					<input type="datetime-local" class="form-control" id="agenda-to" value="${dateFormatEnd}">
+					<input type="datetime-local" class="form-control" id="agenda-to" value="${fin}">
 					<label for="floatingInputGridd">Vers</label>
 				</div>
 			</div>
@@ -151,49 +169,44 @@ const addDateEvent =(date)=>{
 
 		<div class="row g-2 mt-2 mb-2">
 			<input type="button" class="btn btn-outline-primary" onclick="saveAgenda()" id="" value="Enregistrer">
+		</div>
+
+		<div class="alert alert-success mt-2" role="alert" style="display:none;" id="agenda-success"><i class="bi bi-check2-circle"> </i>
+			Agenda sauvegardé avec succès
+		</div>
+
 		</div>`;
    
-   	let map = L.map('map').setView([48.864716, 2.349014], 13);
-
-	L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		maxZoom: 20,
-		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-	}).addTo(map);
-	
-	let marker = L.marker([48.864716, 2.349014]).addTo(map);
-
-	map.on('click', function(e){
-		marker.setLatLng(e.latlng)
-		document.querySelector("#agenda-lat").value = e.latlng.lat
-		document.querySelector("#agenda-lng").value = e.latlng.lng
-	});
-
-  
+   	
 }
 
-const mouseOverEvent =(date)=>{
-	let date_clicked = date +" "+document.querySelector("#current-date").textContent;
+function getCurrentDateTime(date){
+	let date_clicked = document.querySelector("#current-date").textContent;
 	//document.querySelector(".real-day-"+date).classList.toggle("hasEvent");
 	let classNames = ""+document.querySelector(".current-day-"+date).classList;
 
-	if(classNames.includes('hasEvent')==true){
-		document.querySelector(".tooltipss").style.display ="block";
+	let monthName = date_clicked.replace(/[0-9]/g,"");
+	let indexOfMonth = months.indexOf(monthName.trim())+1;
+	let annee = document.querySelector("#current-date").textContent.replace(/[^0-9]/g,"")
 
-		let monthName = date_clicked.replace(/[0-9]/g,"");
-		let indexOfMonth = months.indexOf(monthName.trim())+1;
-		let annee = document.querySelector("#current-date").textContent.replace(/[^0-9]/g,"")
+	let dateLabel =date < 10 ? "0"+date : date;
+	let moisLabel =indexOfMonth < 10 ? "0"+indexOfMonth : indexOfMonth;
 
-		let dateLabel =date < 10 ? "0"+date : date;
-		let moisLabel =indexOfMonth < 10 ? "0"+indexOfMonth : indexOfMonth;
+	let dateSimple = annee+"-"+moisLabel+"-"+dateLabel;
 
-		let dateSimple = annee+"-"+moisLabel+"-"+dateLabel;
-		
-		getAgendaByDatetime("agenda1",dateSimple);
+	return dateSimple;
+}
 
-	}/*else{
-		document.querySelector(".tooltipss").style.display ="none";
-	}*/
+const mouseOverEvent =(date)=>{
 
+	let dateSimple = getCurrentDateTime(date);
+
+	let dateFormatStart = dateSimple +" 00:00:00";
+	let dateFormatEnd = dateSimple +" 23:59:59";
+
+	createNewEventForm(dateFormatStart,dateFormatEnd);
+	
+	getAgendaByDatetime("agenda1",dateSimple);
   
 }
 
@@ -202,10 +215,12 @@ function getAgendaByDatetime(table_name,datetime){
 	.then(response => response.json())
 	.then(data => {
 		let res = ""
+
 		if(data.length>0){
 			for(let agenda of data){
+				
 				res +=`
-					<a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+					<a href="/user/tribut/${table_name}/${agenda.id}" class="list-group-item list-group-item-action flex-column align-items-start">
 						<div class="d-flex w-100 justify-content-between">
 						<h5 class="mb-1">${agenda.title}</h5>
 						<small> ${differenceDay(agenda.from_date)}</small>
@@ -216,7 +231,9 @@ function getAgendaByDatetime(table_name,datetime){
 					`;
 			}
 		}
-		document.querySelector("#agenda-fetched").innerHTML = `<div class="list-group mt-2 mb-2">${res}</div>`;
+		document.querySelector("#agenda-fetched").innerHTML += `<div class="list-group mt-2 mb-2" id="list-group">
+																${res}
+																</div>`;
 	});
 
 }
@@ -248,6 +265,7 @@ function getAgendaByType(table_name,type){
 		
 		if(data.length>0){
 			for(let agenda of data){
+				
 				if(agenda.status==0){
 					resStatu0 += ` <div id="yes-drop" class="drag-drop">
 								<input type="hidden" value='${agenda.id}'>
@@ -255,7 +273,7 @@ function getAgendaByType(table_name,type){
 								<hr>
 								<p>Du ${agenda.from_date}</p>
 								<p>Vers ${agenda.to_date}</p>
-								<a href="#" >Voir plus...</a>
+								<a href='/user/tribut/${table_name}/${agenda.id}' >Voir plus...</a>
 							</div> `;
 				}else{
 					resStatu1 += ` <div id="yes-drop" class="drag-drop">
@@ -264,7 +282,7 @@ function getAgendaByType(table_name,type){
 								<hr>
 								<p>Du ${agenda.from_date}</p>
 								<p>Vers ${agenda.to_date}</p>
-								<a href="#" >Voir plus...</a>
+								<a href='/user/tribut/${table_name}/${agenda.id}' >Voir plus...</a>
 							</div> `;
 				}
 				
@@ -331,12 +349,7 @@ function saveAgenda(){
 	},
 	body: JSON.stringify(data)
 	})).then(req => req.json()).then(message => {
-		let state = document.createElement("div")
-		state.setAttribute("id", "agenda-success");
-		document.querySelector("#agenda-fetched").appendChild(state);
-		document.querySelector("#agenda-success").innerHTML = `<div class="alert alert-success mt-2" role="alert"><i class="bi bi-check2-circle"> </i>
-					Agenda sauvegardé avec succès
-					</div>`
+		document.querySelector("#agenda-success").style.display = "block";
 	});
 	console.log(data);
 }
@@ -450,8 +463,9 @@ function dragMoveListener (event) {
       },
       ondrop: function (event) {
         //event.relatedTarget.textContent = 'Dropped';
-
+		
 		let status = event.target.id == "outer-dropzone"? 1 : 0;
+
 		let id= event.relatedTarget.querySelector("input").value
 		let type= document.querySelector("#data-view").textContent.trim()
 		let data = {
@@ -467,3 +481,6 @@ function dragMoveListener (event) {
         event.target.classList.remove('drop-target');
       }
     });
+
+
+/*********************** End Agenda *****************/
